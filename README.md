@@ -1,4 +1,4 @@
-# Aquaculture Species Tracker
+# Aquaculture Portfolio Tracker
 
 A Streamlit dashboard tracking structural change in global aquaculture for fishes and crustaceans. It answers three questions:
 
