@@ -6,7 +6,7 @@ A Streamlit dashboard tracking structural change in global aquaculture for fishe
 - Is a given country's portfolio diversifying or consolidating?
 - How much has each country's species portfolio composition shifted since 2019?
 
-Live app: [add Streamlit Cloud URL here]
+Live app: [(https://aquaculture-portfolio-tracker.streamlit.app/)]
 Data source: [View raw data](https://docs.google.com/spreadsheets/d/10HE5wznbTTdQc5eDc-JPFzkLi7dQJXnx/)
 
 ---
@@ -42,85 +42,6 @@ NEI_allocated_...csv  ──┘                                    │
                                               Upload to Google Sheets (publish as CSV)
                                                              │
                                                      app_portfolio.py reads live
-```
-
-### Key analytical decisions
-
-**Species filter:** `soc IN ('yes', 'yes not ss')` and `Major_Group IN ('PISCES', 'CRUSTACEA')`. This restricts to welfare-relevant finfish and crustaceans only.
-
-**Individual count formula:** `VALUE (tonnes) x (Lower.indiv.ton + Upper.indiv.ton) / 2`. Mid-point of species-specific conversion factor bounds.
-
-**Jaccard similarity:** Weighted Jaccard on species shares, computed for 2019 to 2023 and for each consecutive year pair 2017-2023. Measures portfolio composition stability.
-
-**Effective Number of Species (ENS):** exp(Shannon entropy) of individual animal counts, split by taxon group (Finfish / Crustacean). Trajectory classified as DIVERSIFYING (change > +0.20), STABLE (within +/-0.20), or CONSOLIDATING (change < -0.20) over the 2019-2023 period. Three NEI allocation scenarios run separately; consensus requires majority (2 of 3).
-
-**Top-40 countries:** Identified by 2023 total individuals from FAO data. Used for the `manually_reviewed` flag in Jaccard and the `low_volume` flag in ENS.
-
----
-
-## Running the pipeline (when new FAO data is released)
-
-### Prerequisites
-
-**R packages:**
-```r
-install.packages(c("dplyr", "tidyr", "readr", "writexl"))
-```
-
-**Python packages:**
-```
-pip install -r requirements.txt
-```
-
-### Step 1: Update input data
-
-Replace the files in `data/` with the new versions:
-- `FAO_allyears_soc.csv` — export from FAO with welfare (`soc`) and conversion factor columns added
-- `NEI_allocated_2000-2023_ALL_SCENARIOS_OPTIONS.csv` — rerun NEI allocation scripts in `data/nei/`
-
-Update the year references in `streamlit_datasheet.R` if the data period has changed:
-```r
-START_YEAR    <- 2019   # first year for species growth analysis
-END_YEAR      <- 2023   # last year (update to new release year)
-JACCARD_YEARS <- 2017:2023   # update upper bound
-```
-
-### Step 2: Run the R pipeline
-
-```r
-Rscript streamlit_datasheet.R
-```
-
-This produces `Streamlit_Datasheet.xlsx` with three tabs. Check the diagnostics printed to console — in particular the ENS consensus distribution and any scenario disagreements.
-
-### Step 3: Upload to Google Sheets
-
-1. Open the existing Google Sheet and replace the data in each tab (or upload a new sheet)
-2. For each tab, go to File > Share > Publish to web, select the tab, choose CSV format, and copy the URL
-3. Update the three URL constants at the top of `app_portfolio.py`:
-
-```python
-SPECIES_COUNTRY_DETAIL_URL = "..."
-ENS_URL                    = "..."
-JACCARD_URL                = "..."
-```
-
-### Step 4: Deploy
-
-
-```
-
----
-
-## Things to check after a data update
-
-- **Species codes:** FAO occasionally renames or reclassifies species between releases. If results look unexpected, check whether any `SPECIES.ALPHA_3_CODE` values have changed.
-- **Country codes:** Same risk for `COUNTRY.UN_CODE`.
-- **Top-40 composition:** The top-40 country list is recomputed from the new data. Countries may enter or exit, shifting which Jaccard results are flagged `manually_reviewed`.
-- **ENS outliers:** Review the console diagnostics for countries where scenarios disagree — these get `UNCERTAIN TRAJECTORY` in the app.
-- **Newcomer/Exiting species:** Worth reviewing manually for any that appear in large volume, as they may represent data entry changes rather than real production shifts.
-
----
 
 ## Contact
 
